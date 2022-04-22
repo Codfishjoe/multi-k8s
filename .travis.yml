@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t codfishjoe/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true codfishjoe/react-test npm test
+
+after_success:
+  - docker build -t codfishjoe/multi-client ./client
+  - docker build -t codfishjoe/multi-nginx ./nginx
+  - docker build -t codfishjoe/multi-server ./server
+  - docker build -t codfishjoe/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push codfishjoe/multi-client
+  - docker push codfishjoe/multi-nginx
+  - docker push codfishjoe/multi-server
+  - docker push codfishjoe/multi-worker
